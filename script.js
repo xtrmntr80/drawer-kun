@@ -33,8 +33,8 @@ function calculateRow(index) {
   const totalQuantityElement = document.getElementById(`total-quantity-${index}`);
   const totalValueElement = document.getElementById(`total-${index}`);
 
-  const bundleCount = bundleInput ? parseInt(bundleInput.value) * 50 : 0;
-  const manualCount = manualInput ? parseInt(manualInput.value) : 0;
+  const bundleCount = bundleInput ? (parseInt(bundleInput.value) || 0) * 50 : 0;
+  const manualCount = manualInput ? (parseInt(manualInput.value) || 0) : 0;
 
   const totalQuantity = bundleCount + manualCount;
   const totalValue = totalQuantity * denominations[index].value;
@@ -92,3 +92,4 @@ function updateHistoryDisplay() {
     historyList.appendChild(listItem);
   });
 }
+
