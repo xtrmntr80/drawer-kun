@@ -8,6 +8,14 @@ index.html
   <link rel="stylesheet" href="styles/styles.css">
 <script src="script/script.js"></script>
 <link rel="icon" href="icon/icon.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+
+<!-- iOS向け（Safariのホーム追加で全画面化） -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon/icon-192.png">
+
 
 </head>
 <body>
@@ -40,5 +48,13 @@ index.html
   </div>
   <script src="script.js"></script>
 </body>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js");
+  });
+}
+</script>
 
 </html>
+
