@@ -41,6 +41,10 @@ index.html
       <h2>総合計: <span id="grandTotal">0</span> 円</h2>
     </div>
     <button class="reset-button" onclick="resetForm()">リセット</button>
+   <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+  <button onclick="exportSummary()">テキストをコピー</button>
+  <button onclick="downloadSummary()">テキスト保存（.txt）</button>
+</div>
     <div class="history-container">
       <h2>履歴</h2>
       <ul id="historyList"></ul>
@@ -57,6 +61,7 @@ if ("serviceWorker" in navigator) {
 </script>
 
 </html>
+
 
 
 
