@@ -93,4 +93,76 @@ function updateHistoryDisplay() {
   });
 }
 
+// 金額の表示整形（3桁区切り）
+function formatYen(n) {
+  return (Number(n) || 0).toLocaleString("ja-JP");
+}
+
+// テキスト生成本体
+function getSummaryText() {
+  const lines = [];
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+
+  lines.push("【ドロアー君 集計結果】");
+  lines.push(`日時: ${y}-${m}-${d} ${hh}:${mm}`);
+  lines.push("");
+
+  // 各金種
+  denominations.forEach((denom, index) => {
+    const qty = parseInt(document.getElementById(`total-quantity-${index}`).textContent) || 0;
+    const amount = parseInt(document.getElementById(`total-${index}`).textContent) || 0;
+    // 例: 100円: 12枚／1,200円
+    lines.push(`${denom.name}: ${qty}枚／${formatYen(amount)}円`);
+  });
+
+  lines.push("");
+  const grand = parseInt(document.getElementById("grandTotal").textContent) || 0;
+  lines.push(`総合計: ${formatYen(grand)}円`);
+
+  return lines.join("\n");
+}
+
+// クリップボードへコピー
+function exportSummary() {
+  const text = getSummaryText();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => alert("テキストをコピーしました。"))
+      .catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+// クリップボードAPI非対応時のフォールバック
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+  alert("テキストをコピーしました。");
+}
+
+// .txt でダウンロード
+function downloadSummary() {
+  const text = getSummaryText();
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const date = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+  a.href = url;
+  a.download = `drawer-kun-${date}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 
