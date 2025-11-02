@@ -42,9 +42,11 @@ index.html
     </div>
     <button class="reset-button" onclick="resetForm()">リセット</button>
    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+ <div class="text-buttons">
   <button onclick="exportSummary()">テキストをコピー</button>
   <button onclick="downloadSummary()">テキスト保存（.txt）</button>
 </div>
+
     <div class="history-container">
       <h2>履歴</h2>
       <ul id="historyList"></ul>
@@ -61,6 +63,7 @@ if ("serviceWorker" in navigator) {
 </script>
 
 </html>
+
 
 
 
