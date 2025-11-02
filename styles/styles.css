@@ -200,4 +200,50 @@ span#grandTotal {
   border-bottom: none;
 }
 
+/* --- テキスト出力ボタン用デザイン --- */
+
+/* ボタン全体のコンテナ（中央寄せ） */
+.text-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* 各ボタンのスタイル */
+.text-buttons button {
+  background-color: #4c8bf5;       /* 落ち着いたブルー */
+  color: #fff;                     /* 白文字 */
+  border: none;
+  border-radius: 8px;              /* 角を少し丸く */
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* ホバー時（マウスをのせたとき） */
+.text-buttons button:hover {
+  background-color: #3b75db;       /* 少し濃い青 */
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* クリック時 */
+.text-buttons button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* スマホでも見やすいように */
+@media (max-width: 600px) {
+  .text-buttons button {
+    width: 80%;
+    font-size: 16px;
+  }
+}
 
