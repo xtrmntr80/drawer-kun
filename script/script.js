@@ -165,4 +165,78 @@ function downloadSummary() {
   URL.revokeObjectURL(url);
 }
 
+// ===== チェック情報（日時・氏名）の初期化 =====
+function initCheckMeta() {
+  const dt = document.getElementById("checkDateTime");
+  const nm = document.getElementById("checkerName");
+  if (!dt || !nm) return;
+
+  // 氏名はローカル保存（次回自動入力）
+  const savedName = localStorage.getItem("drawerKunCheckerName");
+  if (savedName) nm.value = savedName;
+
+  // 日時は未入力なら現在時刻をセット
+  if (!dt.value) {
+    // 現在時刻を datetime-local 形式に
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const yyyy = now.getFullYear();
+    const MM = pad(now.getMonth() + 1);
+    const dd = pad(now.getDate());
+    const hh = pad(now.getHours());
+    const mm = pad(now.getMinutes());
+    dt.value = `${yyyy}-${MM}-${dd}T${hh}:${mm}`;
+  }
+
+  // 氏名の保存
+  nm.addEventListener("change", () => {
+    localStorage.setItem("drawerKunCheckerName", nm.value.trim());
+  });
+}
+window.addEventListener("DOMContentLoaded", initCheckMeta);
+
+// ===== テキスト出力にメタ情報を含める =====
+// 既存の getSummaryText を上書き（or 該当箇所を書き換え）
+function getSummaryText() {
+  const lines = [];
+
+  // 入力された日時・氏名を取得
+  const dtEl = document.getElementById("checkDateTime");
+  const nmEl = document.getElementById("checkerName");
+  const dtVal = dtEl && dtEl.value ? dtEl.value : "";      // 例: 2025-11-02T23:15
+  const nmVal = nmEl && nmEl.value ? nmEl.value.trim() : "";
+
+  // 表示用に日時を整形（未入力なら現在時刻）
+  let displayDateTime = "";
+  if (dtVal) {
+    const d = new Date(dtVal);
+    if (!isNaN(d.getTime())) {
+      const pad = (n) => String(n).padStart(2, "0");
+      displayDateTime = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+  }
+  if (!displayDateTime) {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    displayDateTime = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+
+  lines.push("【ドロアー君 集計結果】");
+  lines.push(`チェック日時: ${displayDateTime}`);
+  lines.push(`チェック者: ${nmVal || "(未入力)"}`);
+  lines.push("");
+
+  // 各金種
+  denominations.forEach((denom, index) => {
+    const qty = parseInt(document.getElementById(`total-quantity-${index}`).textContent) || 0;
+    const amount = parseInt(document.getElementById(`total-${index}`).textContent) || 0;
+    lines.push(`${denom.name}: ${qty}枚／${(Number(amount)||0).toLocaleString("ja-JP")}円`);
+  });
+
+  lines.push("");
+  const grand = parseInt(document.getElementById("grandTotal").textContent) || 0;
+  lines.push(`総合計: ${(Number(grand)||0).toLocaleString("ja-JP")}円`);
+
+  return lines.join("\n");
+}
 
