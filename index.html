@@ -1,4 +1,3 @@
-index.html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -6,31 +5,36 @@ index.html
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ドロアー君</title>
   <link rel="stylesheet" href="styles/styles.css">
-
-<link rel="icon" href="icon/icon.png">
+  <link rel="icon" href="icon/icon.png">
   <link rel="manifest" href="./manifest.webmanifest">
-<meta name="theme-color" content="#ffffff">
-
-<!-- iOS向け（Safariのホーム追加で全画面化） -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="icon/icon-192.png">
-
-
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="icon/icon-192.png">
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h1>ドロアー君</h1>
     </div>
-   <div class="meta" style="margin:12px 0; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-  <label>チェック日時：
-    <input id="checkDateTime" type="datetime-local" style="padding:4px;">
-  </label>
-  <label>チェック者：
-    <input id="checkerName" type="text" placeholder="氏名" style="padding:4px;" />
-  </label>
-</div>
+    <div class="meta" style="margin:12px 0; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <label>チェック日時：
+        <input id="checkDateTime" type="datetime-local" style="padding:4px;">
+      </label>
+      <label>チェック者：
+        <input id="checkerName" type="text" placeholder="氏名" style="padding:4px;">
+      </label>
+      <label>チェック対象：
+        <select id="registerName" required style="padding:4px;">
+          <option value="">レジを選択してください</option>
+          <option value="FRレジ">FRレジ</option>
+          <option value="カフェレジ①">カフェレジ①</option>
+          <option value="カフェレジ②">カフェレジ②</option>
+          <option value="自動入出金機">自動入出金機</option>
+          <option value="キャビネット②">キャビネット②</option>
+        </select>
+      </label>
+    </div>
 
     <table>
       <thead>
@@ -49,33 +53,23 @@ index.html
     <div class="total-container">
       <h2>総合計: <span id="grandTotal">0</span> 円</h2>
     </div>
-   <button class="reset-button" onclick="resetForm()">リセット</button>
-
-<div class="text-buttons">
-  <button onclick="exportSummary()">テキストをコピー</button>
-  <button onclick="downloadSummary()">テキスト保存（.txt）</button>
-</div>
-
-<div class="history-container">
-  <h2>履歴</h2>
-  <ul id="historyList"></ul>
-</div>
-
+    <button class="reset-button" onclick="resetForm()">リセット</button>
+    <div class="text-buttons">
+      <button onclick="exportSummary()">テキストをコピー</button>
+      <button onclick="downloadSummary()">テキスト保存（.txt）</button>
+    </div>
+    <div class="history-container">
+      <h2>履歴</h2>
+      <ul id="historyList"></ul>
+    </div>
+  </div>
   <script src="script/script.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js");
+      });
+    }
+  </script>
 </body>
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js");
-  });
-}
-</script>
-
 </html>
-
-
-
-
-
-
-
