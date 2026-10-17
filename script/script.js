@@ -11,8 +11,8 @@ const denominations = [
   { name: "1円", value: 1, hasBundle: true },
 ];
 
-let history = []; // 履歴を管理する配列
-const maxHistoryLength = 10; // 最大履歴数
+let history = [];
+const maxHistoryLength = 10;
 
 const coinTable = document.getElementById("coinTable");
 denominations.forEach((denomination, index) => {
@@ -32,33 +32,27 @@ function calculateRow(index) {
   const manualInput = document.getElementById(`manual-${index}`);
   const totalQuantityElement = document.getElementById(`total-quantity-${index}`);
   const totalValueElement = document.getElementById(`total-${index}`);
-
-  const bundleCount = bundleInput ? (parseInt(bundleInput.value) || 0) * 50 : 0;
-  const manualCount = manualInput ? (parseInt(manualInput.value) || 0) : 0;
-
+  const bundleCount = bundleInput ? (parseInt(bundleInput.value, 10) || 0) * 50 : 0;
+  const manualCount = manualInput ? (parseInt(manualInput.value, 10) || 0) : 0;
   const totalQuantity = bundleCount + manualCount;
   const totalValue = totalQuantity * denominations[index].value;
-
   totalQuantityElement.textContent = totalQuantity;
   totalValueElement.textContent = totalValue;
-
   updateGrandTotal();
 }
 
 function updateGrandTotal() {
   let grandTotal = 0;
   denominations.forEach((_, index) => {
-    const total = parseInt(document.getElementById(`total-${index}`).textContent) || 0;
+    const total = parseInt(document.getElementById(`total-${index}`).textContent, 10) || 0;
     grandTotal += total;
   });
   document.getElementById("grandTotal").textContent = grandTotal;
 }
 
 function resetForm() {
-  // 現在の総合計を履歴に追加
   const grandTotal = document.getElementById("grandTotal").textContent;
   addToHistory(grandTotal);
-
   denominations.forEach((_, index) => {
     const bundleInput = document.getElementById(`bundle-${index}`);
     const manualInput = document.getElementById(`manual-${index}`);
@@ -71,21 +65,14 @@ function resetForm() {
 }
 
 function addToHistory(grandTotal) {
-  // 履歴配列に追加
   history.push(`総合計: ${grandTotal} 円`);
-
-  // 最大履歴数を超えた場合、古い履歴を削除
-  if (history.length > maxHistoryLength) {
-    history.shift();
-  }
-
-  // 履歴を更新表示
+  if (history.length > maxHistoryLength) history.shift();
   updateHistoryDisplay();
 }
 
 function updateHistoryDisplay() {
   const historyList = document.getElementById("historyList");
-  historyList.innerHTML = ""; // 現在の履歴をクリア
+  historyList.innerHTML = "";
   history.forEach((item) => {
     const listItem = document.createElement("li");
     listItem.textContent = item;
@@ -93,42 +80,58 @@ function updateHistoryDisplay() {
   });
 }
 
-// 金額の表示整形（3桁区切り）
 function formatYen(n) {
   return (Number(n) || 0).toLocaleString("ja-JP");
 }
 
-// テキスト生成本体
+function getLocalDateTimeString(date = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function getCheckDateTime() {
+  return document.getElementById("checkDateTime")?.value || getLocalDateTimeString();
+}
+
+function getSelectedRegister() {
+  return document.getElementById("registerName")?.value || "";
+}
+
+function requireRegister() {
+  const register = getSelectedRegister();
+  if (register) return true;
+  alert("チェック対象のレジを選択してください。");
+  document.getElementById("registerName")?.focus();
+  return false;
+}
+
+// 保存・コピー時の共通テキストを生成する
 function getSummaryText() {
   const lines = [];
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  const hh = String(now.getHours()).padStart(2, "0");
-  const mm = String(now.getMinutes()).padStart(2, "0");
+  const dt = getCheckDateTime().replace("T", " ");
+  const checker = document.getElementById("checkerName")?.value.trim() || "(未入力)";
+  const register = getSelectedRegister();
 
   lines.push("【ドロアー君 集計結果】");
-  lines.push(`日時: ${y}-${m}-${d} ${hh}:${mm}`);
+  lines.push(`チェック日時: ${dt}`);
+  lines.push(`チェック者: ${checker}`);
+  lines.push(`チェック対象: ${register}`);
   lines.push("");
 
-  // 各金種
   denominations.forEach((denom, index) => {
-    const qty = parseInt(document.getElementById(`total-quantity-${index}`).textContent) || 0;
-    const amount = parseInt(document.getElementById(`total-${index}`).textContent) || 0;
-    // 例: 100円: 12枚／1,200円
+    const qty = parseInt(document.getElementById(`total-quantity-${index}`).textContent, 10) || 0;
+    const amount = parseInt(document.getElementById(`total-${index}`).textContent, 10) || 0;
     lines.push(`${denom.name}: ${qty}枚／${formatYen(amount)}円`);
   });
 
   lines.push("");
-  const grand = parseInt(document.getElementById("grandTotal").textContent) || 0;
+  const grand = parseInt(document.getElementById("grandTotal").textContent, 10) || 0;
   lines.push(`総合計: ${formatYen(grand)}円`);
-
   return lines.join("\n");
 }
 
-// クリップボードへコピー
 function exportSummary() {
+  if (!requireRegister()) return;
   const text = getSummaryText();
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text)
@@ -139,104 +142,49 @@ function exportSummary() {
   }
 }
 
-// クリップボードAPI非対応時のフォールバック
 function fallbackCopy(text) {
   const ta = document.createElement("textarea");
   ta.value = text;
   document.body.appendChild(ta);
   ta.select();
-  document.execCommand("copy");
+  const success = document.execCommand("copy");
   document.body.removeChild(ta);
-  alert("テキストをコピーしました。");
+  alert(success ? "テキストをコピーしました。" : "コピーできませんでした。手動でコピーしてください。");
 }
 
-// .txt でダウンロード
 function downloadSummary() {
+  if (!requireRegister()) return;
   const text = getSummaryText();
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const date = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+  const date = getCheckDateTime().slice(0, 10); // 画面で指定された現地日付
+  const register = getSelectedRegister().replace(/[\\/:*?"<>|\x00-\x1F]/g, "_");
   a.href = url;
-  a.download = `drawer-kun-${date}.txt`;
+  a.download = `drawer-kun-${date}-${register}.txt`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // ダウンロード開始後にURLを解放
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// ===== チェック情報（日時・氏名）の初期化 =====
 function initCheckMeta() {
   const dt = document.getElementById("checkDateTime");
   const nm = document.getElementById("checkerName");
-  if (!dt || !nm) return;
+  const reg = document.getElementById("registerName");
+  if (!dt || !nm || !reg) return;
 
-  // 氏名はローカル保存（次回自動入力）
-  const savedName = localStorage.getItem("drawerKunCheckerName");
-  if (savedName) nm.value = savedName;
-
-  // 日時は未入力なら現在時刻をセット
-  if (!dt.value) {
-    // 現在時刻を datetime-local 形式に
-    const now = new Date();
-    const pad = (n) => String(n).padStart(2, "0");
-    const yyyy = now.getFullYear();
-    const MM = pad(now.getMonth() + 1);
-    const dd = pad(now.getDate());
-    const hh = pad(now.getHours());
-    const mm = pad(now.getMinutes());
-    dt.value = `${yyyy}-${MM}-${dd}T${hh}:${mm}`;
+  try {
+    const savedName = localStorage.getItem("drawerKunCheckerName");
+    if (savedName) nm.value = savedName;
+  } catch (e) {
+    // ストレージが利用できない場合も実査は可能
   }
-
-  // 氏名の保存
+  if (!dt.value) dt.value = getLocalDateTimeString();
   nm.addEventListener("change", () => {
-    localStorage.setItem("drawerKunCheckerName", nm.value.trim());
+    try { localStorage.setItem("drawerKunCheckerName", nm.value.trim()); } catch (e) { /* 保存不可なら無視 */ }
   });
+  // レジは誤入力防止のため起動ごとに必ず選択する
 }
 window.addEventListener("DOMContentLoaded", initCheckMeta);
-
-// ===== テキスト出力にメタ情報を含める =====
-// 既存の getSummaryText を上書き（or 該当箇所を書き換え）
-function getSummaryText() {
-  const lines = [];
-
-  // 入力された日時・氏名を取得
-  const dtEl = document.getElementById("checkDateTime");
-  const nmEl = document.getElementById("checkerName");
-  const dtVal = dtEl && dtEl.value ? dtEl.value : "";      // 例: 2025-11-02T23:15
-  const nmVal = nmEl && nmEl.value ? nmEl.value.trim() : "";
-
-  // 表示用に日時を整形（未入力なら現在時刻）
-  let displayDateTime = "";
-  if (dtVal) {
-    const d = new Date(dtVal);
-    if (!isNaN(d.getTime())) {
-      const pad = (n) => String(n).padStart(2, "0");
-      displayDateTime = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-  }
-  if (!displayDateTime) {
-    const now = new Date();
-    const pad = (n) => String(n).padStart(2, "0");
-    displayDateTime = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  }
-
-  lines.push("【ドロアー君 集計結果】");
-  lines.push(`チェック日時: ${displayDateTime}`);
-  lines.push(`チェック者: ${nmVal || "(未入力)"}`);
-  lines.push("");
-
-  // 各金種
-  denominations.forEach((denom, index) => {
-    const qty = parseInt(document.getElementById(`total-quantity-${index}`).textContent) || 0;
-    const amount = parseInt(document.getElementById(`total-${index}`).textContent) || 0;
-    lines.push(`${denom.name}: ${qty}枚／${(Number(amount)||0).toLocaleString("ja-JP")}円`);
-  });
-
-  lines.push("");
-  const grand = parseInt(document.getElementById("grandTotal").textContent) || 0;
-  lines.push(`総合計: ${(Number(grand)||0).toLocaleString("ja-JP")}円`);
-
-  return lines.join("\n");
-}
-
