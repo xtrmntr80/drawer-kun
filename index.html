@@ -11,6 +11,46 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="apple-touch-icon" href="icon/icon-192.png">
+  <style>
+    /* 差異記録エリアだけに適用。既存のstyles.cssは変更不要 */
+    .difference-panel {
+      margin: 14px 0;
+      padding: 14px;
+      border-radius: 10px;
+      background: #f8fbfd;
+      border: 1px solid #cbd9e4;
+      color: #18324d;
+    }
+    .difference-panel h2 { font-size: 1.05rem; margin: 0 0 10px; }
+    .difference-grid { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .difference-field { display: flex; flex-direction: column; gap: 5px; flex: 1 1 190px; }
+    .difference-field select, .difference-field input, .difference-field textarea {
+      box-sizing: border-box; width: 100%; padding: 8px;
+      border: 1px solid #b6c7d4; border-radius: 5px;
+      font: inherit; background: #fff; color: #172d43;
+    }
+    .difference-field textarea { resize: vertical; min-height: 86px; }
+    .difference-fields { margin-top: 12px; }
+    .difference-hint { margin: 8px 0 0; font-size: 0.82rem; line-height: 1.5; color: #52697a; }
+    #differenceDetails[hidden] { display: none; }
+    .difference-search-help { margin-top: 12px; padding-top: 10px; border-top: 1px solid #d5e1e9; }
+    .difference-search-help summary { cursor: pointer; font-size: 0.88rem; font-weight: bold; }
+    .difference-search-help p { font-size: 0.82rem; margin: 8px 0 0; line-height: 1.6; }
+    .difference-search-help code { padding: 2px 5px; background: #eaf0f4; border-radius: 4px; font-weight: bold; }
+    .difference-search-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .difference-search-copy {
+      border: 1px solid #9eb4c4; border-radius: 7px; padding: 9px 12px;
+      background: #fff; color: #18324d; font: inherit; font-size: .88rem;
+      cursor: pointer; flex: 1 1 130px; min-height: 42px;
+    }
+    .difference-search-copy:hover, .difference-search-copy:focus-visible {
+      background: #eaf3fa; border-color: #4a7796;
+    }
+    .difference-search-copy:focus-visible { outline: 2px solid #4a7796; outline-offset: 2px; }
+    .difference-search-feedback { min-height: 1.3em; margin: 7px 0 0; font-size: .82rem; color: #1c674b; }
+    .difference-search-help .difference-search-step { margin-top: 10px; }
+    .difference-search-help code { padding: 1px 4px; background: #eaf0f4; border-radius: 3px; }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -53,6 +93,38 @@
     <div class="total-container">
       <h2>総合計: <span id="grandTotal">0</span> 円</h2>
     </div>
+    <section class="difference-panel" aria-labelledby="differenceHeading">
+      <h2 id="differenceHeading">過不足の記録</h2>
+      <div class="difference-grid">
+        <label class="difference-field" for="differenceStatus">実査結果
+          <select id="differenceStatus" onchange="updateDifferenceFields()">
+            <option value="normal">正常（特記事項なし）</option>
+            <option value="excess">過剰</option>
+            <option value="shortage">不足</option>
+          </select>
+        </label>
+      </div>
+      <div class="difference-fields" id="differenceDetails" hidden>
+        <div class="difference-grid">
+          <label class="difference-field" for="differenceNote">理由・状況（任意）
+            <textarea id="differenceNote" rows="3" placeholder="例：決済履歴とレシートを照合したが原因不明。過不足報告アプリにて報告済み。"></textarea>
+          </label>
+        </div>
+        <p class="difference-hint">理由は空欄でも保存できます。過剰・不足を選ぶと、保存ファイル名と本文に検索用タグが自動で付きます。正式な過不足報告は別アプリで行ってください。</p>
+      </div>
+      <details class="difference-search-help">
+        <summary>保存ファイルの検索方法（コピーできます）</summary>
+        <p class="difference-search-step">① 探したい記録のボタンを押して検索語をコピー</p>
+        <div class="difference-search-controls">
+          <button type="button" class="difference-search-copy" onclick="copyDifferenceSearchTag('shortage')" aria-label="不足の検索語をコピー">不足を検索（コピー）</button>
+          <button type="button" class="difference-search-copy" onclick="copyDifferenceSearchTag('excess')" aria-label="過剰の検索語をコピー">過剰を検索（コピー）</button>
+          <button type="button" class="difference-search-copy" onclick="copyDifferenceSearchTag('all')" aria-label="過不足すべての検索語をコピー">過不足すべて（コピー）</button>
+        </div>
+        <p id="differenceSearchFeedback" class="difference-search-feedback" role="status" aria-live="polite"></p>
+        <p class="difference-search-step">② Windowsで保存先フォルダを開き、右上の検索欄に貼り付けて検索</p>
+        <p>検索タグはファイル名に自動で付きます。正常時は付きません。ボタンは検索語をコピーする機能で、フォルダ検索そのものは開きません。</p>
+      </details>
+    </section>
     <button class="reset-button" onclick="resetForm()">リセット</button>
     <div class="text-buttons">
       <button onclick="exportSummary()">テキストをコピー</button>
