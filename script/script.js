@@ -62,6 +62,12 @@ function resetForm() {
     if (manualInput) manualInput.value = "0";
   });
   document.getElementById("grandTotal").textContent = "0";
+  // 次の実査に前回の異常記録が混ざらないよう、差異情報だけ初期化する
+  const status = document.getElementById("differenceStatus");
+  const note = document.getElementById("differenceNote");
+  if (status) status.value = "normal";
+  if (note) note.value = "";
+  updateDifferenceFields();
 }
 
 function addToHistory(grandTotal) {
@@ -105,17 +111,85 @@ function requireRegister() {
   return false;
 }
 
+// ファイル検索専用の単語。理由文の日本語と衝突しないよう英数字を使用する。
+// DKALERT = 全過不足、DKPLUS = 過剰、DKMINUS = 不足
+const DIFFERENCE_TYPES = {
+  normal: { label: "正常", tag: "" },
+  excess: { label: "過剰", tag: "DKPLUS" },
+  shortage: { label: "不足", tag: "DKMINUS" },
+};
+
+function getDifference() {
+  const key = document.getElementById("differenceStatus")?.value || "normal";
+  const type = DIFFERENCE_TYPES[key] ? key : "normal";
+  const note = document.getElementById("differenceNote")?.value.trim() || "";
+  return { key: type, ...DIFFERENCE_TYPES[type], note };
+}
+
+function updateDifferenceFields() {
+  const isNormal = getDifference().key === "normal";
+  const details = document.getElementById("differenceDetails");
+  if (details) details.hidden = isNormal;
+}
+
+// 検索を覚えなくてよいように、対象のファイル名に付く専用タグをコピーする。
+// 理由文に「過剰」「不足」と書かれていても、ファイル名の専用タグで識別できる。
+const DIFFERENCE_SEARCH_TAGS = Object.freeze({
+  shortage: "DKMINUS",
+  excess: "DKPLUS",
+  all: "DKALERT",
+});
+
+async function copyDifferenceSearchTag(kind) {
+  const tag = DIFFERENCE_SEARCH_TAGS[kind];
+  if (!tag) return;
+  const message = document.getElementById("differenceSearchFeedback");
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(tag);
+    } else {
+      const field = document.createElement("textarea");
+      field.value = tag;
+      field.setAttribute("readonly", "");
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+      const ok = document.execCommand("copy");
+      field.remove();
+      if (!ok) throw new Error("コピーに失敗しました");
+    }
+    if (message) message.textContent = `「${tag}」をコピーしました。保存先フォルダの検索欄に貼り付けてください。`;
+  } catch (error) {
+    if (message) message.textContent = `コピーできませんでした。検索欄に「${tag}」を入力してください。`;
+  }
+}
+
+function validateBeforeExport() {
+  return requireRegister();
+}
+
 // 保存・コピー時の共通テキストを生成する
 function getSummaryText() {
   const lines = [];
   const dt = getCheckDateTime().replace("T", " ");
   const checker = document.getElementById("checkerName")?.value.trim() || "(未入力)";
   const register = getSelectedRegister();
+  const difference = getDifference();
 
   lines.push("【ドロアー君 集計結果】");
   lines.push(`チェック日時: ${dt}`);
   lines.push(`チェック者: ${checker}`);
   lines.push(`チェック対象: ${register}`);
+  lines.push(`実査結果: ${difference.label}`);
+  if (difference.tag) {
+    lines.push(`検索タグ（過不足共通）: DKALERT`);
+    lines.push(`検索タグ（種別）: ${difference.tag}`);
+    if (difference.note) {
+      lines.push("理由・状況:");
+      lines.push(difference.note);
+    }
+  }
   lines.push("");
 
   denominations.forEach((denom, index) => {
@@ -131,7 +205,7 @@ function getSummaryText() {
 }
 
 function exportSummary() {
-  if (!requireRegister()) return;
+  if (!validateBeforeExport()) return;
   const text = getSummaryText();
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text)
@@ -153,15 +227,19 @@ function fallbackCopy(text) {
 }
 
 function downloadSummary() {
-  if (!requireRegister()) return;
+  if (!validateBeforeExport()) return;
   const text = getSummaryText();
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const date = getCheckDateTime().slice(0, 10); // 画面で指定された現地日付
+  // 日付＋時刻で同日・同レジの複数回実査でも区別しやすくする
+  const dateTime = getCheckDateTime();
+  const date = dateTime.slice(0, 10);
+  const time = dateTime.slice(11, 16).replace(":", "");
   const register = getSelectedRegister().replace(/[\\/:*?"<>|\x00-\x1F]/g, "_");
+  const tag = getDifference().tag;
   a.href = url;
-  a.download = `drawer-kun-${date}-${register}.txt`;
+  a.download = `drawer-kun-${date}-${time}-${register}${tag ? `-DKALERT-${tag}` : ""}.txt`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -186,5 +264,6 @@ function initCheckMeta() {
     try { localStorage.setItem("drawerKunCheckerName", nm.value.trim()); } catch (e) { /* 保存不可なら無視 */ }
   });
   // レジは誤入力防止のため起動ごとに必ず選択する
+  updateDifferenceFields();
 }
 window.addEventListener("DOMContentLoaded", initCheckMeta);
